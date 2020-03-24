@@ -29,57 +29,71 @@ int main(int argc, char * argv[], char * envp[]){
     struct dirent *dir_entry;       //directory entry currently reading
     struct stat filestat;           //info about the file currently reading
 
-    pid_t pids[MAX_PIDS];           //array of pids of child processes
-    int it_pid=0, status;
+    //pid_t pids[MAX_PIDS];           //array of pids of child processes
+     //it_pid=0,
+    
+    int status;
 
     DIR * home;                     //directory curently opening
 
 
     //Opening directory
     if((home = opendir(argv[2])) == NULL){
-        perror(argv[1]);
+        //perror(argv[1]);
+        printf("error opening dir");
         exit(2);
     }
 
     //Filling pid array
-    fillpids(pids, MAX_PIDS);
+    //fillpids(pids, MAX_PIDS);
 
     while((dir_entry = readdir(home))!=NULL){
 
         //Reads file
         stat(dir_entry->d_name, &filestat);
 
-        if()
-        
+
+        if(strcmp(dir_entry->d_name, ".")==0 || strcmp(dir_entry->d_name, "..") ==0){
+            continue;
+        }
+
         //Verifies if is directory    
         if(S_ISDIR(filestat.st_mode)){
             //printf("oi\n");
             pid_t pid = fork();
-            
+
             if(pid == 0){        //Child process
                 char *new_argv[argc];
 
                 copy_values(new_argv,argv,argc);
+                printf("%s %s %s", new_argv[0], new_argv[1], new_argv[1]);
 
                 sprintf(new_argv[2], "%s/%s", new_argv[2], dir_entry->d_name);
                 
                 printf("Dirname: %s\n", new_argv[2]);
 
-                execvp("./simpledu",&new_argv[1]);
+                execvp("./simpledu",&new_argv[0]);
                 printf("Error in executing recursive simpledu\n");
                 exit(3);
-            }else{              //Parent process
-
+            }/*else{              //Parent process
+                
                 if(putpid(pids, MAX_PIDS, pid)!=0){
                     printf("Maximum number of forks exceeded\n");
                     exit(5);
                 }
-            }
-
+            }*/
+            printf("%ld\t%s\n", filestat.st_size/1024,dir_entry->d_name);
+        }else{
+             
         }
-        printf("%ld\t%s\n", filestat.st_size/1024,dir_entry->d_name);
+       
+        
+        //printf("cheguei!\n");
+        while(waitpid(-1, &status, WNOHANG) != 0 && waitpid(-1, &status, WNOHANG) != -1);
+        //printf("passei o while ma friends!\n");
         
         //Verifica se algum processo filho acabou
+        /*
         it_pid = 0;
         while (pids[it_pid] != (pid_t) -1){
             
@@ -88,7 +102,7 @@ int main(int argc, char * argv[], char * envp[]){
             }
             it_pid++;
                 
-        }
+        }*/
     }
     
     printf("hello\n");
@@ -100,7 +114,7 @@ int main(int argc, char * argv[], char * envp[]){
 
 void copy_values(char *dest[], char *copy[], int n){
     for (int i =0; i<n; i++){
-        dest[i] = copy[i];
+        strcpy(dest[i], copy[i]);
     }
 }
 
