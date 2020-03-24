@@ -49,7 +49,7 @@ int main(int argc, char * argv[], char * envp[]){
         //Reads file
         stat(dir_entry->d_name, &filestat);
 
-        if()
+        
         
         //Verifies if is directory    
         if(S_ISDIR(filestat.st_mode)){
