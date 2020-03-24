@@ -20,19 +20,19 @@ int main(int argc, char * argv[], char * envp[]){
 
  
     //Error conditions
-    if(argc > 3){
-        printf("Usage: ./simpledu -l <dirname>\n");
+    if(argc != 3){
+        printf("Usage: %s -l <dirname>\n", argv[0]);
         exit(1);
     }
 
     
-    struct dirent *file;    //file currently reading
-    struct stat filestat;   //info about the file currently reading
+    struct dirent *dir_entry;       //directory entry currently reading
+    struct stat filestat;           //info about the file currently reading
 
-    pid_t pids[MAX_PIDS];   //array of pids of child processes
+    pid_t pids[MAX_PIDS];           //array of pids of child processes
     int it_pid=0, status;
 
-    DIR * home;              //directory curently opening
+    DIR * home;                     //directory curently opening
 
 
     //Opening directory
@@ -44,10 +44,12 @@ int main(int argc, char * argv[], char * envp[]){
     //Filling pid array
     fillpids(pids, MAX_PIDS);
 
-    while((file = readdir(home))!=NULL){
+    while((dir_entry = readdir(home))!=NULL){
 
         //Reads file
-        stat(file->d_name, &filestat);
+        stat(dir_entry->d_name, &filestat);
+
+        if()
         
         //Verifies if is directory    
         if(S_ISDIR(filestat.st_mode)){
@@ -56,12 +58,12 @@ int main(int argc, char * argv[], char * envp[]){
             
             if(pid == 0){        //Child process
                 char *new_argv[argc];
+
                 copy_values(new_argv,argv,argc);
 
+                sprintf(new_argv[2], "%s/%s", new_argv[2], dir_entry->d_name);
                 
-                sprintf(new_argv[2], "%s/%s", new_argv[2], file->d_name);
-                
-                printf("%s\n", new_argv[2]);
+                printf("Dirname: %s\n", new_argv[2]);
 
                 execvp("./simpledu",&new_argv[1]);
                 printf("Error in executing recursive simpledu\n");
@@ -75,7 +77,7 @@ int main(int argc, char * argv[], char * envp[]){
             }
 
         }
-        printf("%ld\t%s\n", filestat.st_size/1024,file->d_name);
+        printf("%ld\t%s\n", filestat.st_size/1024,dir_entry->d_name);
         
         //Verifica se algum processo filho acabou
         it_pid = 0;
