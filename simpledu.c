@@ -24,12 +24,16 @@ int main(int argc, char * argv[], char * envp[]){
         printf("Usage: %s -l <dirname>\n", argv[0]);
         exit(1);
     }
-    
-    
-    struct dirent *dir_entry;       //directory entry currently reading
-    struct stat filestat;           //info about the file currently reading
 
-    //pid_t pids[MAX_PIDS];           //array of pids of child processes
+
+
+    
+    //printf("Starting with values: %s %s %s\n", argv[0],argv[1], argv[2]);
+    
+    struct dirent *dir_entry;           //directory entry currently reading
+    struct stat filestat;               //info about the file currently reading
+
+    //pid_t pids[MAX_PIDS];             //array of pids of child processes
      //it_pid=0,
     
     int status;
@@ -44,7 +48,8 @@ int main(int argc, char * argv[], char * envp[]){
         exit(2);
     }
 
-    chdir(argv[2]);                  //Changes to the pretended directory
+    //Goes to the pretended directory
+    chdir(argv[2]);                  
     
     char buf[200];
     printf("Path: %s\n", getcwd(buf, 200));
@@ -53,6 +58,9 @@ int main(int argc, char * argv[], char * envp[]){
     //fillpids(pids, MAX_PIDS);
 
     while((dir_entry = readdir(home))!=NULL){
+
+        //LOG
+        //printf("Processing %s file in process %d\n", dir_entry->d_name, getpid());
 
         //Reads file
         stat(dir_entry->d_name, &filestat);
@@ -70,22 +78,24 @@ int main(int argc, char * argv[], char * envp[]){
 
             if(pid == 0){        //Child process
                 
-                char prog[100];
+                char *new_arg[3];
                 
                 //copy_values(new_argv,argv,argc);
 
-                sprintf(argv[2], "%s/", dir_entry->d_name);
+                sprintf(new_arg[2], "%s", dir_entry->d_name);
                 
-                if(strlen(argv[0]) == 0){
-                    argv[0] = "../simpledu";
+                if(strlen(argv[0]) == 10){
+                    new_arg[0] = "../simpledu";
                 }else {
-                    sprintf(argv[0], "../%s", argv[0]);
+                    sprintf(new_arg[0], "../%s", argv[0]);
                 }
 
-                printf("%s %s %s\n", prog, argv[1], argv[2]);    
+                new_arg[1] = "-l";
 
-                execvp(argv[0], &argv[0]);
-                printf("Error in executing recursive simpledu to %s\n", argv[2]);
+                //printf("Going to %s using prog %s with flag %s\n", new_arg[2], new_arg[0], new_arg[1]);    
+
+                execvp(new_arg[0], new_arg);
+                printf("Error in executing recursive simpledu to %s\n", new_arg[2]);
                 exit(3);
             }/*else{              //Parent process
                 
@@ -98,10 +108,11 @@ int main(int argc, char * argv[], char * envp[]){
         }
        
         printf("%ld\t%s\n", filestat.st_size/1024,dir_entry->d_name);
-        //printf("cheguei!\n");
 
-        while(waitpid(-1, &status, WNOHANG) != 0 && waitpid(-1, &status, WNOHANG) != -1);
-
+        /*
+        int ret;
+        while((ret = waitpid(-1, &status, WNOHANG) != 0) && ret != -1);
+*/
         //printf("passei o while ma friends!\n");
         
         //Verifica se algum processo filho acabou
@@ -120,6 +131,8 @@ int main(int argc, char * argv[], char * envp[]){
     //printf("hello\n");
     //Waiting for all childs to end (needs to change!)
     //while(wait(&status)!=-1);
+    int ret;
+    while ((ret = wait(&status)) > 0);
 
     return 0;
 }
