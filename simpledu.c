@@ -10,17 +10,29 @@
 #include <string.h>
 #include <fcntl.h>
 
-#define MAX_PIDS 20
+//#define MAX_PIDS 20
+
+void killpids(pid_t *a, int n);
 
 void copy_values(char *dest[], char *copy[], int n);
 
 void fillpids(pid_t *a, int n);
 
-int putpid(pid_t *a, int n, pid_t pid);
+int putpid(pid_t *a, pid_t pid, int n);
 
 //void logIt(int fdLog, clock_t instant, pid_t pid, char * action, char * info);
 
 void transformToString(char *result, char *array[], int n);
+
+pid_t childPids[20];
+fillpids(childPids, 20);
+//ESTAMOS COM ERRO NO MAX PIDS
+
+void childHandler(int signal){
+    printf("\nSIGINT RECEIVED...\n");
+    killpids(childPids, 20);
+    exit(0);
+}
 
 int main(int argc, char * argv[], char * envp[]){
 
@@ -71,7 +83,7 @@ int main(int argc, char * argv[], char * envp[]){
     //chdir(argv[2]);                  
 
     //Filling pid array
-    //fillpids(pids, MAX_PIDS);
+    fillpids(childPids, 20);
 
     while((dir_entry = readdir(home))!=NULL){
 
@@ -104,11 +116,13 @@ int main(int argc, char * argv[], char * envp[]){
 
         }else if(S_ISDIR(filestat.st_mode)){          //Verifies if is directory  
             
-
+            signal(SIGINT, childHandler);
             pid_t pid = fork();
 
+            putpid(childPids, pid, 20);
 
             if(pid == 0){        //Child process
+                
                 
                 char * new_arg[4];
                 new_arg[2] = malloc(100);
@@ -164,6 +178,7 @@ int main(int argc, char * argv[], char * envp[]){
 
             int ret;
             while ((ret = wait(&status)) > 0); 
+            sleep(5);
             printf("%ld\t%s\n", filestat.st_size/1024,filename);
         }
        
@@ -210,7 +225,8 @@ void fillpids(pid_t *a, int n){
     a[n-1]= (pid_t) -1;
 }
 
-int putpid(pid_t *a, int n, pid_t pid){
+int putpid(pid_t *a, pid_t pid, int n){
+    printf("PID PUT: %d\n", pid);
     int i=0;
     while(a[i]!=-1){
         if(a[i]==0){
@@ -219,6 +235,13 @@ int putpid(pid_t *a, int n, pid_t pid){
         }
     }
     return 1;
+}
+
+void killpids(pid_t *a, int n){
+    for (int i = 0; i<n; i++){
+        if(a[i] != -1 && a[i] != 0)
+            kill(a[i], SIGKILL);
+    }
 }
 
 
