@@ -1,20 +1,14 @@
-#include <stdbool.h>
-#include <stdio.h>
+#include "flags.h"
 
 
-struct flags
-{
-    bool all, bytes, block_size, deref, sep_dirs, max_depth, clinks;
-    int nbytes, depth_level;
-};
 
-int fill_flags(struct flags *scpflags, char * argv[], int argc){
+int fill_flags(struct flags *scpflags, char * argv[], int argc, int *pathPos){
 
     int i=1;
     scpflags->all=false; scpflags->block_size=false; scpflags->bytes=false; scpflags->clinks = false;
     scpflags->depth_level=false; scpflags->deref =false; scpflags->max_depth = false; scpflags->sep_dirs = false;
 
-    while(argv[i+1] != NULL){
+    while(argv[i] != NULL){
         
 
         if(!scpflags->all && (strcmp(argv[i], "-a") == 0 || strcmp(argv[i], "--all")== 0) ){
@@ -43,7 +37,7 @@ int fill_flags(struct flags *scpflags, char * argv[], int argc){
         }else if(!scpflags->sep_dirs && (strcmp(argv[i], "-S") == 0 || strcmp(argv[i], "--separate-dirs") == 0)){
             scpflags->sep_dirs = true;
         
-        }else if(!scpflags->max_depth && strncmp(argv[i], "--max-depth=", 12    ) == 0){
+        }else if(!scpflags->max_depth && strncmp(argv[i], "--max-depth=", 12) == 0){
             scpflags->max_depth = true;
             
             char temp[50];
@@ -60,8 +54,11 @@ int fill_flags(struct flags *scpflags, char * argv[], int argc){
         }else if(!scpflags->clinks && (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--count-links") == 0) ){
             scpflags->clinks = true;
         
-        }else{
-            printf("Other flag detected\n");
+        }else if(strncmp(argv[i], "-", 1) != 0){
+            *pathPos = i;
+            
+        }else {
+            printf("Flag not supported detected\n");
             return -1;
         }
         i++;

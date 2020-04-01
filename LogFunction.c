@@ -1,9 +1,5 @@
-#include <stdio.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <time.h>
 
-
+#include "LogFunction.h"
 
 void log_create(char *logFileName, char *argv[], int argc){
     //Write to LogFile
@@ -44,4 +40,15 @@ void log_exit(char * logFileName, int exit_status){
 
     exit(exit_status);
     
+}
+
+void transformToString(char *result, char *array[], int n){
+    int i=0;
+    while(array[i] != NULL && i<n){
+        if (i==0) 
+            sprintf(result, "%s", array[i]);
+        else
+            sprintf(result, "%s %s", result, array[i]);
+        i++;
+    }
 }
