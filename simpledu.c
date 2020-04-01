@@ -95,13 +95,13 @@ int main(int argc, char * argv[], char * envp[]){
     char path[200];                     //current path
     getcwd(path,200);
 
-    sprintf(path, "%s/%s", path, argv[2]);
+    sprintf(path, "%s/%s", path, argv[argc-1]);
     
     //printf("Path scanning: %s\n",path);
 
     //Opening directory
     if((home = opendir(path)) == NULL){
-        //perror(argv[1]);
+
         printf("Error opening dir\n");
         log_exit(logFile, 2);
         //exit(2);
@@ -125,7 +125,7 @@ int main(int argc, char * argv[], char * envp[]){
         //printf("Processing %s file in process %d\n", filename, getpid());
 
         char filepath[300];
-        if(sprintf(filepath, "%s/%s", argv[2], filename) < 0){
+        if(sprintf(filepath, "%s/%s", argv[argc-1], filename) < 0){
             printf("Error in sprintf\n");
             log_exit(logFile, 5);
             //exit(5);
@@ -141,8 +141,10 @@ int main(int argc, char * argv[], char * envp[]){
         }
         
         if(spcFlags.all && S_ISREG(filestat.st_mode)){
-
-            printf("%ld\t%s\n", filestat.st_size/1024,filepath);
+            if(spcFlags.bytes)
+                printf("%ld\t%s\n", filestat.st_size,filepath);
+            else
+                printf("%ld\t%s\n", filestat.st_size/1024,filepath);
 
         }else if(S_ISDIR(filestat.st_mode)){          //Verifies if is directory  
             
@@ -152,13 +154,16 @@ int main(int argc, char * argv[], char * envp[]){
 
             if(pid == 0){        //Child process
                 
-                char * new_arg[4];
-                new_arg[2] = malloc(100);
-                new_arg[4] = NULL;
+                char * new_arg[argc];
+                new_arg[argc] = NULL;
                 
-                //copy_values(new_argv,argv,argc);
+                for(int i = 0; i < argc; i++)
+                    new_arg[i] = malloc(100);
                 
-                if(sprintf(new_arg[2], "%s/%s", argv[2] ,filename) < 0){
+
+                copy_values(new_arg,argv,argc);
+                
+                if(sprintf(new_arg[argc-1], "%s/%s", argv[argc-1] ,filename) < 0){
                     printf("sprintf\n");
                     log_exit(logFile, 4);
                     //exit(4);
@@ -174,13 +179,10 @@ int main(int argc, char * argv[], char * envp[]){
                 }
                 */
 
-                new_arg[1] = "-l";
-                new_arg[0]= argv[0];
-
-                //printf("Going to %s using prog %s with flag %s in process %d\n", new_arg[2], new_arg[0], new_arg[1], getpid());    
+                //printf("Going to %s using prog %s with flag %s in process %d\n", new_arg[argc-1], new_arg[0], new_arg[1], getpid());    
                 
                 execvp(new_arg[0], new_arg);
-                printf("Error in executing recursive simpledu to %s\n", new_arg[2]);
+                printf("Error in executing recursive simpledu to %s\n", new_arg[argc-1]);
                 log_exit(logFile, 3);
                 //exit(3);
             }else{              //Parent process
@@ -197,7 +199,10 @@ int main(int argc, char * argv[], char * envp[]){
 
             int ret;
             while ((ret = wait(&status)) > 0); 
-            printf("%ld\t%s\n", filestat.st_size/1024,filename);
+            if(spcFlags.bytes)
+                printf("%ld\t%s\n", filestat.st_size,filepath);
+            else
+                printf("%ld\t%s\n", filestat.st_size/1024,filepath);
         }
        
        
@@ -292,7 +297,7 @@ void log_create(char *logFileName, char *argv[], int argc){
 
 void log_exit(char * logFileName, int exit_status){
 
-    if(logFileName==NULL) return;
+    if(logFileName==NULL) exit(exit_status);
 
     int fdLog = open(logFileName,O_WRONLY | O_CREAT | O_APPEND, 0644);
     
