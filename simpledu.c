@@ -63,20 +63,20 @@ int main(int argc, char * argv[], char * envp[]){
     if(strcmp(argv[1], "help") == 0 && argc == 2){
         print_help();
         log_exit(logFile, 0);
-        exit(0);
+        //exit(0);
     }
 
     //Error conditions
     if(argc > 9 || argc == 1){
         printf("Usage: %s -l <flags> <dirname>\nFor more information about the flags, run %s help\n", argv[0], argv[0]);
         log_exit(logFile, 1);
-        exit(1);
+        //exit(1);
     }
 
     if( fill_flags(&spcFlags,argv,argc)){
         printf("Someting went wrong when setting up the flags!\n");
         log_exit(logFile, 6);
-        exit(6);
+        //exit(6);
     }   
     
 
@@ -104,7 +104,7 @@ int main(int argc, char * argv[], char * envp[]){
         //perror(argv[1]);
         printf("Error opening dir\n");
         log_exit(logFile, 2);
-        exit(2);
+        //exit(2);
     }
 
     //Goes to the pretended directory
@@ -128,7 +128,7 @@ int main(int argc, char * argv[], char * envp[]){
         if(sprintf(filepath, "%s/%s", argv[2], filename) < 0){
             printf("Error in sprintf\n");
             log_exit(logFile, 5);
-            exit(5);
+            //exit(5);
         }
 
         //printf("filepath: %s\n",filepath);
@@ -137,10 +137,10 @@ int main(int argc, char * argv[], char * envp[]){
         if(stat(filepath, &filestat)!=0){
             printf("Error in stat\n");
             log_exit(logFile, 3);
-            exit(3);
+            //exit(3);
         }
         
-        if(S_ISREG(filestat.st_mode)){
+        if(spcFlags.all && S_ISREG(filestat.st_mode)){
 
             printf("%ld\t%s\n", filestat.st_size/1024,filepath);
 
@@ -161,7 +161,7 @@ int main(int argc, char * argv[], char * envp[]){
                 if(sprintf(new_arg[2], "%s/%s", argv[2] ,filename) < 0){
                     printf("sprintf\n");
                     log_exit(logFile, 4);
-                    exit(4);
+                    //exit(4);
                 }
 
                 //write(STDOUT_FILENO,"after sprintf\n",14);
@@ -182,7 +182,7 @@ int main(int argc, char * argv[], char * envp[]){
                 execvp(new_arg[0], new_arg);
                 printf("Error in executing recursive simpledu to %s\n", new_arg[2]);
                 log_exit(logFile, 3);
-                exit(3);
+                //exit(3);
             }else{              //Parent process
 
                
@@ -228,7 +228,7 @@ int main(int argc, char * argv[], char * envp[]){
 
     
     log_exit(logFile, 0);
-    return 0;
+    
 }
 
 void copy_values(char *dest[], char *copy[], int n){
@@ -304,6 +304,8 @@ void log_exit(char * logFileName, int exit_status){
     
     write(fdLog, buff, strlen(buff));
     close(fdLog);
+
+    exit(exit_status);
     
 }
 
