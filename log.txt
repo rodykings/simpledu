@@ -395,3 +395,75 @@ t
 3.0500 - 6822 - SEND_PIPE - 36	BTeste
 
 3.0890 - 6822 - EXIT - 0
+1.1590 - 6933 - CREATE - ./simpledu BTeste
+0.7670 - 6934 - CREATE - ./simpledu BTeste/kuku
+0.9770 - 6934 - SEND_PIPE - 8	BTeste/kuku
+
+1.0010 - 6934 - EXIT - 0
+1.5930 - 6933 - RECV_PIPE - 8	BTeste/kuku
+
+1.6590 - 6933 - SEND_PIPE - 8	BTeste/kuku
+
+0.7940 - 6935 - CREATE - ./simpledu BTeste/TETE
+0.7880 - 6936 - CREATE - ./simpledu BTeste/TETE/bb
+1.0010 - 6936 - SEND_PIPE - 8	BTeste/TETE/bb
+
+1.0270 - 6936 - EXIT - 0
+1.1130 - 6935 - RECV_PIPE - 8	BTeste/TETE/bb
+
+1.1480 - 6935 - SEND_PIPE - 8	BTeste/TETE/bb
+
+1.2080 - 6935 - SEND_PIPE - 16	BTeste/TETE
+
+1.2380 - 6935 - EXIT - 0
+1.8520 - 6933 - RECV_PIPE - 8	BTeste/TETE/bb
+16	BTeste/TETE
+
+1.9100 - 6933 - SEND_PIPE - 8	BTeste/TETE/bb
+16	BTeste/TETE
+
+1.9710 - 6933 - SEND_PIPE - 36	BTeste
+
+1.9960 - 6933 - EXIT - 0
+0.8320 - 6937 - CREATE - ./simpledu BTeste --max-depth=2 -a
+0.5940 - 6938 - CREATE - ./simpledu BTeste/kuku --max-depth=1 -a
+0.7760 - 6938 - SEND_PIPE - 4	BTeste/kuku/pp.txt
+
+0.8190 - 6938 - SEND_PIPE - 8	BTeste/kuku
+
+0.8570 - 6938 - EXIT - 0
+1.1410 - 6937 - RECV_PIPE - 4	BTeste/kuku/pp.txt
+8	BTeste/kuku
+
+1.1800 - 6937 - SEND_PIPE - 4	BTeste/kuku/pp.txt
+8	BTeste/kuku
+
+1.2220 - 6937 - SEND_PIPE - 4	BTeste/ppp.txt
+
+0.6720 - 6939 - CREATE - ./simpledu BTeste/TETE --max-depth=1 -a
+0.5610 - 6940 - CREATE - ./simpledu BTeste/TETE/bb --max-depth=0 -a
+0.7210 - 6940 - SEND_PIPE - 8	BTeste/TETE/bb
+
+0.7390 - 6940 - EXIT - 0
+0.9590 - 6939 - RECV_PIPE - 8	BTeste/TETE/bb
+
+0.9980 - 6939 - SEND_PIPE - 8	BTeste/TETE/bb
+
+1.0410 - 6939 - SEND_PIPE - 4	BTeste/TETE/g.txt
+
+1.0790 - 6939 - SEND_PIPE - 16	BTeste/TETE
+
+1.1240 - 6939 - EXIT - 0
+1.3420 - 6937 - RECV_PIPE - 8	BTeste/TETE/bb
+4	BTeste/TETE/g.txt
+16	BTeste/TETE
+á
+1.3930 - 6937 - SEND_PIPE - 8	BTeste/TETE/bb
+4	BTeste/TETE/g.txt
+16	BTeste/TETE
+á
+1.4440 - 6937 - SEND_PIPE - 4	BTeste/gogo.txt
+
+1.4730 - 6937 - SEND_PIPE - 36	BTeste
+
+1.4900 - 6937 - EXIT - 0
