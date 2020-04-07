@@ -16,10 +16,16 @@
 
 #define MAX_PIDS 20
 
-void fillpids(pid_t *a, int n);
 
-int putpid(pid_t *a, int n, pid_t pid);
+pid_t pids[MAX_PIDS];     
 
+/* 07-04-2020 14:54 ©Rodrigo e Deborah */
+//When parent receive SIGINT sends SIGSTOP to childs
+void signalHandler(int signal){
+    printf("\nSIGINT RECEIVED...\n");
+    killpids(pids, 20);
+    exit(0);
+}
 
 int main(int argc, char * argv[], char * envp[]){
    
@@ -58,7 +64,7 @@ int main(int argc, char * argv[], char * envp[]){
     struct dirent *dir_entry;           //directory entry currently reading
     struct stat filestat;               //info about the file currently reading
 
-    //pid_t pids[MAX_PIDS];             //array of pids of child processes
+            //array of pids of child processes
     //it_pid=0,
     
     int status;
@@ -84,7 +90,7 @@ int main(int argc, char * argv[], char * envp[]){
     //chdir(argv[2]);                  
 
     //Filling pid array
-    //fillpids(pids, MAX_PIDS);
+    fillpids(pids, MAX_PIDS);
 
     while((dir_entry = readdir(home))!=NULL){
 
@@ -116,14 +122,18 @@ int main(int argc, char * argv[], char * envp[]){
         if(spcFlags.all && S_ISREG(filestat.st_mode)){
             if(spcFlags.bytes)
                 printf("%ld\t%s\n", filestat.st_size,filepath);
+            else if(spcFlags.block_size)
+                printf("%ld\t%s\n", filestat.st_size/spcFlags.nbytes,filepath);
             else
                 printf("%ld\t%s\n", filestat.st_size/1024,filepath);
 
         }else if(S_ISDIR(filestat.st_mode)){          //Verifies if is directory  
             
+            signal(SIGINT, signalHandler);
 
             pid_t pid = fork();
 
+            putpid(pids, MAX_PIDS, pid);
 
             if(pid == 0){        //Child process
                 
@@ -174,8 +184,12 @@ int main(int argc, char * argv[], char * envp[]){
             while ((ret = wait(&status)) > 0); 
             if(spcFlags.bytes)
                 printf("%ld\t%s\n", filestat.st_size,filepath);
+            else if(spcFlags.block_size)
+                printf("%ld\t%s\n", filestat.st_size/spcFlags.nbytes,filepath);
             else
                 printf("%ld\t%s\n", filestat.st_size/1024,filepath);
+
+            //sleep(5);
         }
        
        
@@ -207,22 +221,4 @@ int main(int argc, char * argv[], char * envp[]){
     
     log_exit(logFile, 0);
     
-}
-
-void fillpids(pid_t *a, int n){
-    for (int i = 0; i<n; i++){
-        a[i]= (pid_t) 0;
-    }
-    a[n-1]= (pid_t) -1;
-}
-
-int putpid(pid_t *a, int n, pid_t pid){
-    int i=0;
-    while(a[i]!=-1){
-        if(a[i]==0){
-            a[i] = pid;
-            return 0;
-        }
-    }
-    return 1;
 }

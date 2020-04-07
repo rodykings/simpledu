@@ -16,3 +16,31 @@ void copy_values(char *dest[], char *copy[], int n){
         strcpy(dest[i], copy[i]);
     }
 }
+
+
+void fillpids(pid_t *a, int n){
+    for (int i = 0; i<n; i++){
+        a[i]= (pid_t) 0;
+    }
+    a[n-1]= (pid_t) -1;
+}
+
+int putpid(pid_t *a, int n, pid_t pid){
+    int i=0;
+    while(a[i]!=-1){
+        if(a[i]==0){
+            a[i] = pid;
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
+void killpids(pid_t *a, int n){
+    for (int i = 0; i<n; i++){
+        if(a[i] != -1 && a[i] != 0)
+            kill(a[i], SIGSTOP);
+    }
+    exit(-1);
+}
