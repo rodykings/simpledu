@@ -126,7 +126,7 @@ int main(int argc, char * argv[], char * envp[]){
             
             if(spcFlags.bytes){
 
-                if(spcFlags.all && spcFlags.depth_level > 0){ 
+                if(spcFlags.all && (!spcFlags.max_depth || spcFlags.depth_level > 0)){ 
 
                     sprintf(line,"%ld\t%s\n", filestat.st_size,filepath);
                     write(STDOUT_FILENO, line, strlen(line));
@@ -137,7 +137,7 @@ int main(int argc, char * argv[], char * envp[]){
 
             }else{
 
-                if(spcFlags.all && spcFlags.depth_level > 0){ 
+                if(spcFlags.all && (!spcFlags.max_depth || spcFlags.depth_level > 0)){ 
 
                     sprintf(line,"%ld\t%s\n", filestat.st_blocks/2,filepath); 
                     write(STDOUT_FILENO, line, strlen(line));
@@ -163,7 +163,7 @@ int main(int argc, char * argv[], char * envp[]){
 
             if(pid == 0){        //Child process
 
-                if(spcFlags.depth_level > 0)
+                if(spcFlags.max_depth && spcFlags.depth_level > 0)
                     spcFlags.depth_level--;
 
                 close(fd[READ]);
@@ -180,7 +180,7 @@ int main(int argc, char * argv[], char * envp[]){
 
                 copy_values(new_arg,argv,argc);
                 
-                if(depth_pos != -2){
+                if(spcFlags.max_depth){
                     char new_depth[20];
                     sprintf(new_depth, "--max-depth=%d", spcFlags.depth_level);
                     strcpy(new_arg[depth_pos],new_depth);
@@ -213,7 +213,7 @@ int main(int argc, char * argv[], char * envp[]){
                 
                     log_pipe(logFile,line,'r');
                     
-                    if(spcFlags.depth_level > 0){
+                    if(!spcFlags.max_depth || spcFlags.depth_level > 0){
 
                         write(STDOUT_FILENO, line, n);
                         log_pipe(logFile,line,'s');
