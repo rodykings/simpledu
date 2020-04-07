@@ -42,6 +42,44 @@ void log_exit(char * logFileName, int exit_status){
     
 }
 
+void log_pipe(char *logFileName, char *msg, char r){
+
+    if(logFileName == NULL) return;
+
+    int fdLog = open(logFileName,O_WRONLY | O_CREAT | O_APPEND, 0644);
+
+    double time = ( (double) clock() / (double) (CLOCKS_PER_SEC) )*1000;
+
+    char buff[200];
+    
+    if(r == 'r')
+        sprintf(buff, "%.4f - %d - RECV_PIPE - %s\n", time, getpid(), msg);
+    else
+        sprintf(buff, "%.4f - %d - SEND_PIPE - %s\n", time, getpid(), msg);
+
+    write(fdLog, buff, strlen(buff));
+
+    close(fdLog);
+}
+
+void log_entry(char *logFileName, int msg){
+    
+}
+
+void log_write(char *logFileName, long int msg){
+    if(logFileName == NULL) return;
+
+    int fdLog = open(logFileName,O_WRONLY | O_CREAT | O_APPEND, 0644);
+
+    char temp[100];
+    sprintf(temp, "%ld\n", msg);
+
+    write(fdLog, temp, strlen(temp));
+
+    close(fdLog);
+    
+}
+
 void transformToString(char *result, char *array[], int n){
     int i=0;
     while(array[i] != NULL && i<n){

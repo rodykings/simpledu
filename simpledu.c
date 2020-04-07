@@ -15,6 +15,9 @@
 #include "flags.h"
 
 #define MAX_PIDS 20
+#define READ 0
+#define WRITE 1
+#define MAX_LINE 256
 
 void fillpids(pid_t *a, int n);
 
@@ -22,10 +25,11 @@ int putpid(pid_t *a, int n, pid_t pid);
 
 
 int main(int argc, char * argv[], char * envp[]){
-   
+    
 
     char * logFile = getenv("LOG_FILENAME");
 
+    
     //Writes in LogFile
     log_create(logFile, argv, argc);
 
@@ -33,7 +37,7 @@ int main(int argc, char * argv[], char * envp[]){
     int pathPos;
 
 
-    if(strcmp(argv[1], "help") == 0 && argc == 2){
+    if(argc == 2 &&strcmp(argv[1], "help") == 0){
         print_help();
         log_exit(logFile, 0);
         //exit(0);
@@ -60,6 +64,9 @@ int main(int argc, char * argv[], char * envp[]){
 
     //pid_t pids[MAX_PIDS];             //array of pids of child processes
     //it_pid=0,
+    
+    
+    long int sum = 0;                   //Sum of the subdirectories and files of the directory
     
     int status;
 
@@ -108,25 +115,42 @@ int main(int argc, char * argv[], char * envp[]){
 
         //Reads file
         if(stat(filepath, &filestat)!=0){
+            
             printf("Error in stat\n");
             log_exit(logFile, 3);
-            //exit(3);
         }
         
-        if(spcFlags.all && S_ISREG(filestat.st_mode)){
-            if(spcFlags.bytes)
-                printf("%ld\t%s\n", filestat.st_size,filepath);
-            else
-                printf("%ld\t%s\n", filestat.st_size/1024,filepath);
+        //Processes regular file
+        if(S_ISREG(filestat.st_mode)){
+
+            
+            if(spcFlags.bytes){
+                if(spcFlags.all) printf("%ld\t%s\n", filestat.st_size,filepath);
+                sum += filestat.st_size;
+
+            }else{
+                if(spcFlags.all) printf("%ld\t%s\n", filestat.st_blocks/2,filepath);
+                sum += filestat.st_blocks/2;
+            }
+        
+            log_write(logFile,sum);
 
         }else if(S_ISDIR(filestat.st_mode)){          //Verifies if is directory  
             
+            int fd[2];
+
+            if(pipe(fd) == -1){
+                log_exit(logFile,6);
+            }
 
             pid_t pid = fork();
 
-
             if(pid == 0){        //Child process
-                
+
+                close(fd[READ]);
+
+                dup2(fd[WRITE], STDOUT_FILENO);
+
                 char * new_arg[argc];
                 new_arg[argc] = NULL;
                 
@@ -139,29 +163,45 @@ int main(int argc, char * argv[], char * envp[]){
                 if(sprintf(new_arg[pathPos], "%s/%s", argv[pathPos] ,filename) < 0){
                     printf("sprintf\n");
                     log_exit(logFile, 4);
-                    //exit(4);
                 }
-
-                //write(STDOUT_FILENO,"after sprintf\n",14);
-                
-                /*
-                if(strlen(argv[0]) == 10){
-                    new_arg[0] = "../simpledu";
-                }else {
-                    sprintf(new_arg[0], "../%s", argv[0]);
-                }
-                */
 
                 //printf("Going to %s using prog %s with flag %s in process %d\n", new_arg[argc-1], new_arg[0], new_arg[1], getpid());    
                 
                 execvp(new_arg[0], new_arg);
                 printf("Error in executing recursive simpledu to %s\n", new_arg[argc-1]);
                 log_exit(logFile, 3);
-                //exit(3);
+                
             }else{              //Parent process
+                
+                
+                close(fd[WRITE]);
+                
+                int ret = 1;
+                while ((ret = wait(&status)) > 0); 
+                
+                int n;
+                long int res;
+                char line[MAX_LINE];
+
+                while((n=read(fd[READ],line, MAX_LINE)) != 0){
+                
+                    log_pipe(logFile,line,'r');
+
+                    write(STDOUT_FILENO, line, n);
+
+                    log_pipe(logFile,line,'s');
+
+                    if(extract_number(line, &res) == -1) log_exit(logFile,8);
+                    sum+=res;      
+                }
+
+                log_write(logFile, sum);
 
                
-
+                
+                //Close up files
+                close(fd[READ]);
+                
              /*   
                 if(putpid(pids, MAX_PIDS, pid)!=0){
                     printf("Maximum number of forks exceeded\n");
@@ -170,12 +210,7 @@ int main(int argc, char * argv[], char * envp[]){
                 */
             }
 
-            int ret;
-            while ((ret = wait(&status)) > 0); 
-            if(spcFlags.bytes)
-                printf("%ld\t%s\n", filestat.st_size,filepath);
-            else
-                printf("%ld\t%s\n", filestat.st_size/1024,filepath);
+            
         }
        
        
@@ -201,11 +236,30 @@ int main(int argc, char * argv[], char * envp[]){
     
     //Waiting for all childs to end (needs to change!)
     //while(wait(&status)!=-1);
-    int ret;
-    while ((ret = wait(&status)) > 0);
+    //int ret;
+    //while ((ret = wait(&status)) > 0);
+    char line[MAX_LINE];
 
-    
+    //Reads file
+    if(stat(".", &filestat)!=0){
+        printf("Error in stat\n");
+        log_exit(logFile, 3);
+    }
+
+    if(spcFlags.bytes){
+        sum+= filestat.st_size;
+        sprintf(line,"%ld\t%s\n", sum, argv[pathPos]);
+        write(STDOUT_FILENO, line, strlen(line));
+
+    }else{
+        sum+= filestat.st_blocks/2;
+        sprintf(line,"%ld\t%s\n", sum, argv[pathPos]);
+        write(STDOUT_FILENO, line, strlen(line));
+    }
+    log_pipe(logFile,line,'s');
+
     log_exit(logFile, 0);
+
     
 }
 

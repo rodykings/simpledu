@@ -1,6 +1,18 @@
-2.1200 - 22915 - CREATE - ./simpledu -l Teste
-1.3190 - 22916 - CREATE - ./simpledu -l Teste/subtest
-1.4760 - 22917 - CREATE - ./simpledu -l Teste/subtest/subsubTest
-2.0000 - 22917 - EXIT - 0
-2.0860 - 22916 - EXIT - 0
-2.8770 - 22915 - EXIT - 0
+0.5030 - 28486 - CREATE - ./simpledu BTeste -a
+4
+0.4420 - 28487 - CREATE - ./simpledu BTeste/TETE -a
+4
+0.5880 - 28487 - SEND_PIPE - 8	BTeste/TETE
+
+0.6010 - 28487 - EXIT - 0
+0.7360 - 28486 - RECV_PIPE - 8	BTeste/TETE
+4	BTeste/TETE/g.txt
+
+0.7740 - 28486 - SEND_PIPE - 8	BTeste/TETE
+4	BTeste/TETE/g.txt
+
+16
+20
+0.8600 - 28486 - SEND_PIPE - 24	BTeste
+
+0.8770 - 28486 - EXIT - 0

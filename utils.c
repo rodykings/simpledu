@@ -16,3 +16,34 @@ void copy_values(char *dest[], char *copy[], int n){
         strcpy(dest[i], copy[i]);
     }
 }
+
+int extract_number(const char *line, long int *result){
+    
+    if(line == NULL || result == NULL)  return -1;
+
+    char copy[256];
+    strcpy(copy,line);
+
+    long int res=0, temp=0;
+    
+    char *response1, *response2;
+    response1 = strtok(copy,"\t");
+    
+    if(sscanf(response1, "%ld", &temp) == EOF) return -1;
+    
+    res+=temp;
+    
+    response2 = strtok(NULL, "\n");
+    
+    while((response1 = strtok(NULL, "\t"))!=NULL){
+
+        if(sscanf(response1, "%ld", &temp) == EOF) return -1;
+        res+=temp;
+
+        response2 = strtok(NULL, "\n");
+    }
+
+    *result = res;
+
+    return 0;
+}
