@@ -20,15 +20,21 @@ int fill_flags(struct flags *scpflags, char * argv[], int argc, int *pathPos, in
         
         }else if(!scpflags->block_size && (strncmp(argv[i], "-B",2) == 0 || strncmp(argv[i], "--block-size=", 13)== 0) ){
             scpflags->block_size = true;
-
-            char temp[50];
-            strcpy(temp, argv[i]);
-            strtok(temp, "=");
             int itemp;
+            char temp[50];
 
-            if(sscanf(strtok(NULL, " "), "%d", &itemp) == EOF){
-                printf("Error on sscnaf\n");
-                return -1;
+            if(strncmp(argv[i], "--block-size=", 13)== 0){
+               
+                strcpy(temp, argv[i]);
+                strtok(temp, "=");
+            
+            }else {
+                strcpy(temp, argv[i+1]);
+                if(sscanf(strtok(NULL, " "), "%d", &itemp) == EOF){
+                
+                    printf("Error on sscnaf\n");
+                    return -1;
+                }
             }
 
             scpflags->nbytes = itemp;

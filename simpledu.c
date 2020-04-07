@@ -37,7 +37,7 @@ int main(int argc, char * argv[], char * envp[]){
     int pathPos, depth_pos;
 
 
-    if(argc == 2 &&strcmp(argv[1], "help") == 0){
+    if(argc == 2 && strcmp(argv[1], "help") == 0){
         print_help();
         log_exit(logFile, 0);
         //exit(0);
@@ -128,9 +128,9 @@ int main(int argc, char * argv[], char * envp[]){
 
                 if(spcFlags.all && spcFlags.depth_level > 0){ 
 
-                    sprintf(line,"%ld\t%s\n", filestat.st_size,filepath); 
+                    sprintf(line,"%ld\t%s\n", filestat.st_size,filepath);
                     write(STDOUT_FILENO, line, strlen(line));
-                    log_pipe(logFile,line,'s'); 
+                    log_pipe(logFile,line,'s');
                 }
 
                 sum += filestat.st_size;
