@@ -1,64 +1,70 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/times.h>
+#include <time.h>
 #include <unistd.h>
 #include <wait.h>
 #include <string.h>
 #include <fcntl.h>
+#include <stdbool.h>
 
-//#define MAX_PIDS 20
+#include "utils.h"
+#include "LogFunction.h"
+#include "flags.h"
 
-void killpids(pid_t *a, int n);
+#define MAX_PIDS 20
 
-void copy_values(char *dest[], char *copy[], int n);
 
-void fillpids(pid_t *a, int n);
+pid_t pids[MAX_PIDS];     
 
-int putpid(pid_t *a, pid_t pid, int n);
-
-//void logIt(int fdLog, clock_t instant, pid_t pid, char * action, char * info);
-
-void transformToString(char *result, char *array[], int n);
-
-pid_t childPids[20];
-fillpids(childPids, 20);
-//ESTAMOS COM ERRO NO MAX PIDS
-
-void childHandler(int signal){
+/* 07-04-2020 14:54 ©Rodrigo e Deborah */
+//When parent receive SIGINT sends SIGSTOP to childs
+void signalHandler(int signal){
     printf("\nSIGINT RECEIVED...\n");
-    killpids(childPids, 20);
+    killpids(pids, 20);
     exit(0);
 }
 
 int main(int argc, char * argv[], char * envp[]){
-
- 
-    //Error conditions
-    if(argc != 3){
-        printf("Usage: %s -l <dirname>\n", argv[0]);
-        exit(1);
-    }
-    
-    struct tms t;
-    clock_t start = times(&t);
-    long ticks = sysconf(_SC_CLK_TCK);
+   
 
     char * logFile = getenv("LOG_FILENAME");
-    int fdLog;
-    if(logFile!=NULL){
-        fdLog = open(logFile,O_WRONLY | O_CREAT | O_APPEND, 0644);
+
+    //Writes in LogFile
+    log_create(logFile, argv, argc);
+
+    struct flags spcFlags;              //The flags on the argument line
+    int pathPos;
+
+
+    if(strcmp(argv[1], "help") == 0 && argc == 2){
+        print_help();
+        log_exit(logFile, 0);
+        //exit(0);
     }
+
+    //Error conditions
+    if(argc > 9 || argc == 1){
+        printf("Usage: %s -l <flags> <dirname>\nFor more information about the flags, run %s help\n", argv[0], argv[0]);
+        log_exit(logFile, 1);
+        //exit(1);
+    }
+
+
+    if(fill_flags(&spcFlags, argv, argc, &pathPos)){
+        printf("Someting went wrong when setting up the flags!\n");
+        log_exit(logFile, 6);
+    }   
+    
 
     //printf("Starting with values: %s %s %s\n", argv[0],argv[1], argv[2]);
     
     struct dirent *dir_entry;           //directory entry currently reading
     struct stat filestat;               //info about the file currently reading
 
-    //pid_t pids[MAX_PIDS];             //array of pids of child processes
+            //array of pids of child processes
     //it_pid=0,
     
     int status;
@@ -68,22 +74,23 @@ int main(int argc, char * argv[], char * envp[]){
     char path[200];                     //current path
     getcwd(path,200);
 
-    sprintf(path, "%s/%s", path, argv[2]);
+    sprintf(path, "%s/%s", path, argv[pathPos]);
     
     //printf("Path scanning: %s\n",path);
 
     //Opening directory
     if((home = opendir(path)) == NULL){
-        //perror(argv[1]);
+
         printf("Error opening dir\n");
-        exit(2);
+        log_exit(logFile, 2);
+        //exit(2);
     }
 
     //Goes to the pretended directory
     //chdir(argv[2]);                  
 
     //Filling pid array
-    fillpids(childPids, 20);
+    fillpids(pids, MAX_PIDS);
 
     while((dir_entry = readdir(home))!=NULL){
 
@@ -97,9 +104,10 @@ int main(int argc, char * argv[], char * envp[]){
         //printf("Processing %s file in process %d\n", filename, getpid());
 
         char filepath[300];
-        if(sprintf(filepath, "%s/%s", argv[2], filename) < 0){
+        if(sprintf(filepath, "%s/%s", argv[pathPos], filename) < 0){
             printf("Error in sprintf\n");
-            exit(5);
+            log_exit(logFile, 5);
+            //exit(5);
         }
 
         //printf("filepath: %s\n",filepath);
@@ -107,32 +115,41 @@ int main(int argc, char * argv[], char * envp[]){
         //Reads file
         if(stat(filepath, &filestat)!=0){
             printf("Error in stat\n");
-            exit(3);
+            log_exit(logFile, 3);
+            //exit(3);
         }
         
-        if(S_ISREG(filestat.st_mode)){
-
-            printf("%ld\t%s\n", filestat.st_size/1024,filepath);
+        if(spcFlags.all && S_ISREG(filestat.st_mode)){
+            if(spcFlags.bytes)
+                printf("%ld\t%s\n", filestat.st_size,filepath);
+            else if(spcFlags.block_size)
+                printf("%ld\t%s\n", filestat.st_size/spcFlags.nbytes,filepath);
+            else
+                printf("%ld\t%s\n", filestat.st_size/1024,filepath);
 
         }else if(S_ISDIR(filestat.st_mode)){          //Verifies if is directory  
             
-            signal(SIGINT, childHandler);
+            signal(SIGINT, signalHandler);
+
             pid_t pid = fork();
 
-            putpid(childPids, pid, 20);
+            putpid(pids, MAX_PIDS, pid);
 
             if(pid == 0){        //Child process
                 
+                char * new_arg[argc];
+                new_arg[argc] = NULL;
                 
-                char * new_arg[4];
-                new_arg[2] = malloc(100);
-                new_arg[4] = NULL;
+                for(int i = 0; i < argc; i++)
+                    new_arg[i] = malloc(100);
                 
-                //copy_values(new_argv,argv,argc);
+
+                copy_values(new_arg,argv,argc);
                 
-                if(sprintf(new_arg[2], "%s/%s", argv[2] ,filename) < 0){
+                if(sprintf(new_arg[pathPos], "%s/%s", argv[pathPos] ,filename) < 0){
                     printf("sprintf\n");
-                    exit(4);
+                    log_exit(logFile, 4);
+                    //exit(4);
                 }
 
                 //write(STDOUT_FILENO,"after sprintf\n",14);
@@ -145,28 +162,15 @@ int main(int argc, char * argv[], char * envp[]){
                 }
                 */
 
-                new_arg[1] = "-l";
-                new_arg[0]= argv[0];
-
-                //printf("Going to %s using prog %s with flag %s in process %d\n", new_arg[2], new_arg[0], new_arg[1], getpid());    
-
+                //printf("Going to %s using prog %s with flag %s in process %d\n", new_arg[argc-1], new_arg[0], new_arg[1], getpid());    
+                
                 execvp(new_arg[0], new_arg);
-                printf("Error in executing recursive simpledu to %s\n", new_arg[2]);
-                exit(3);
+                printf("Error in executing recursive simpledu to %s\n", new_arg[argc-1]);
+                log_exit(logFile, 3);
+                //exit(3);
             }else{              //Parent process
 
-                if(logFile != NULL){
-                    //printf("Starting to write to log!\n");
-
-                    char buff[100], cmdString[100];
-
-                    transformToString(cmdString,argv, argc);
-                    
-                    sprintf(buff, "%4.2ld - %d - CREATE - %s\n", (times(&t) -start)/ticks, getpid(), cmdString);
-                    write(fdLog, buff, strlen(buff));
-
-                    //printf("Ending to write to log!\n");
-                }
+               
 
              /*   
                 if(putpid(pids, MAX_PIDS, pid)!=0){
@@ -178,8 +182,14 @@ int main(int argc, char * argv[], char * envp[]){
 
             int ret;
             while ((ret = wait(&status)) > 0); 
-            sleep(5);
-            printf("%ld\t%s\n", filestat.st_size/1024,filename);
+            if(spcFlags.bytes)
+                printf("%ld\t%s\n", filestat.st_size,filepath);
+            else if(spcFlags.block_size)
+                printf("%ld\t%s\n", filestat.st_size/spcFlags.nbytes,filepath);
+            else
+                printf("%ld\t%s\n", filestat.st_size/1024,filepath);
+
+            //sleep(5);
         }
        
        
@@ -187,7 +197,7 @@ int main(int argc, char * argv[], char * envp[]){
         /*
         int ret;
         while((ret = waitpid(-1, &status, WNOHANG) != 0) && ret != -1);
-*/
+        */
         //printf("passei o while ma friends!\n");
         
         //Verifica se algum processo filho acabou
@@ -203,56 +213,12 @@ int main(int argc, char * argv[], char * envp[]){
         }*/
     }
     
-    //printf("hello\n");
     //Waiting for all childs to end (needs to change!)
     //while(wait(&status)!=-1);
     int ret;
     while ((ret = wait(&status)) > 0);
 
-    return 0;
-}
-
-void copy_values(char *dest[], char *copy[], int n){
-    for (int i =0; i<n; i++){
-        strcpy(dest[i], copy[i]);
-    }
-}
-
-void fillpids(pid_t *a, int n){
-    for (int i = 0; i<n; i++){
-        a[i]= (pid_t) 0;
-    }
-    a[n-1]= (pid_t) -1;
-}
-
-int putpid(pid_t *a, pid_t pid, int n){
-    printf("PID PUT: %d\n", pid);
-    int i=0;
-    while(a[i]!=-1){
-        if(a[i]==0){
-            a[i] = pid;
-            return 0;
-        }
-    }
-    return 1;
-}
-
-void killpids(pid_t *a, int n){
-    for (int i = 0; i<n; i++){
-        if(a[i] != -1 && a[i] != 0)
-            kill(a[i], SIGKILL);
-    }
-}
-
-
-void transformToString(char *result, char *array[], int n){
-    int i=0;
-    while(array[i] != NULL && i<n){
-        if (i==0) 
-            sprintf(result, "%s", array[i]);
-        else
-            sprintf(result, "%s %s", result, array[i]);
-        i++;
-    }
-
+    
+    log_exit(logFile, 0);
+    
 }
