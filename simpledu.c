@@ -64,7 +64,7 @@ int main(int argc, char * argv[], char * envp[]){
 
     //pid_t pids[MAX_PIDS];             //array of pids of child processes
     //it_pid=0,
-    
+
     
     long int sum = 0;                   //Sum of the subdirectories and files of the directory
     
@@ -122,18 +122,27 @@ int main(int argc, char * argv[], char * envp[]){
         
         //Processes regular file
         if(S_ISREG(filestat.st_mode)){
-
+            char line[MAX_LINE];
             
             if(spcFlags.bytes){
-                if(spcFlags.all) printf("%ld\t%s\n", filestat.st_size,filepath);
+
+                if(spcFlags.all){ 
+                    sprintf(line,"%ld\t%s\n", filestat.st_size,filepath); 
+                    write(STDOUT_FILENO, line, strlen(line));    
+                }
                 sum += filestat.st_size;
 
             }else{
-                if(spcFlags.all) printf("%ld\t%s\n", filestat.st_blocks/2,filepath);
+
+                if(spcFlags.all){ 
+                    sprintf(line,"%ld\t%s\n", filestat.st_blocks/2,filepath); 
+                    write(STDOUT_FILENO, line, strlen(line));    
+                }
                 sum += filestat.st_blocks/2;
             }
+            log_pipe(logFile,line,'s');
         
-            log_write(logFile,sum);
+            //log_write(logFile,sum);
 
         }else if(S_ISDIR(filestat.st_mode)){          //Verifies if is directory  
             
@@ -192,15 +201,14 @@ int main(int argc, char * argv[], char * envp[]){
                     log_pipe(logFile,line,'s');
 
                     if(extract_number(line, &res) == -1) log_exit(logFile,8);
-                    sum+=res;      
+                    sum+=res;
                 }
 
-                log_write(logFile, sum);
+                //log_write(logFile, sum);
 
-               
-                
                 //Close up files
                 close(fd[READ]);
+            
                 
              /*   
                 if(putpid(pids, MAX_PIDS, pid)!=0){
@@ -240,7 +248,7 @@ int main(int argc, char * argv[], char * envp[]){
     //while ((ret = wait(&status)) > 0);
     char line[MAX_LINE];
 
-    //Reads file
+    //Reads information about file
     if(stat(".", &filestat)!=0){
         printf("Error in stat\n");
         log_exit(logFile, 3);
@@ -258,6 +266,7 @@ int main(int argc, char * argv[], char * envp[]){
     }
     log_pipe(logFile,line,'s');
 
+                
     log_exit(logFile, 0);
 
     

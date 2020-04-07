@@ -43,7 +43,7 @@ int extract_number(const char *line, long int *result){
         response2 = strtok(NULL, "\n");
     }
 
-    *result = res;
+    *result = temp;
 
     return 0;
 }
