@@ -44,3 +44,8 @@ void killpids(pid_t *a, int n){
     }
     exit(-1);
 }
+
+
+
+
+

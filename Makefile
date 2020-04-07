@@ -14,3 +14,6 @@ simpledu.o: simpledu.c utils.h LogFunction.h flags.h
 
 flags.o: flags.c flags.h
 	gcc -Wall flags.c -c
+
+process.o: process.c process.h
+	gcc -Wall process.c -c

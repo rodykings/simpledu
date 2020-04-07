@@ -21,3 +21,5 @@ void fillpids(pid_t *a, int n);
 int putpid(pid_t *a, int n, pid_t pid);
 
 void killpids(pid_t *a, int n);
+
+

@@ -2,17 +2,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "utils.h"
 
-/*  Definição da struct que contém todas as flags
-    A presença das flags está definida com as variáveis bool
-    Algumas flags vêm com números associados, justificando-se assim as variaveis de tipo int
-*/
-struct flags
+struct args
 {
+    char *path;
     bool all, bytes, block_size, deref, sep_dirs, max_depth, clinks;
     int nbytes, depth_level;
 };
 
-int fill_flags(struct flags *scpflags, char * argv[], int argc, int *pathPos);
+int fill_args(struct args *args, char * argv[], int argc);
 
-void print_flags(struct flags f);
+void print_args(struct args *args);
+
+void verify_args(char * argv[], int argc);
