@@ -34,7 +34,7 @@ int main(int argc, char * argv[], char * envp[]){
     log_create(logFile, argv, argc);
 
     struct flags spcFlags;              //The flags on the argument line
-    int pathPos;
+    int pathPos, depth_pos;
 
 
     if(argc == 2 &&strcmp(argv[1], "help") == 0){
@@ -51,7 +51,7 @@ int main(int argc, char * argv[], char * envp[]){
     }
 
 
-    if(fill_flags(&spcFlags, argv, argc, &pathPos)){
+    if(fill_flags(&spcFlags, argv, argc, &pathPos, &depth_pos)){
         printf("Someting went wrong when setting up the flags!\n");
         log_exit(logFile, 6);
     }   
@@ -126,25 +126,32 @@ int main(int argc, char * argv[], char * envp[]){
             
             if(spcFlags.bytes){
 
-                if(spcFlags.all){ 
+                if(spcFlags.all && spcFlags.depth_level > 0){ 
+
                     sprintf(line,"%ld\t%s\n", filestat.st_size,filepath); 
-                    write(STDOUT_FILENO, line, strlen(line));    
+                    write(STDOUT_FILENO, line, strlen(line));
+                    log_pipe(logFile,line,'s'); 
                 }
+
                 sum += filestat.st_size;
 
             }else{
 
-                if(spcFlags.all){ 
+                if(spcFlags.all && spcFlags.depth_level > 0){ 
+
                     sprintf(line,"%ld\t%s\n", filestat.st_blocks/2,filepath); 
-                    write(STDOUT_FILENO, line, strlen(line));    
+                    write(STDOUT_FILENO, line, strlen(line));
+                    log_pipe(logFile,line,'s');   
                 }
+
                 sum += filestat.st_blocks/2;
             }
-            log_pipe(logFile,line,'s');
+            
         
             //log_write(logFile,sum);
 
         }else if(S_ISDIR(filestat.st_mode)){          //Verifies if is directory  
+            
             
             int fd[2];
 
@@ -156,10 +163,14 @@ int main(int argc, char * argv[], char * envp[]){
 
             if(pid == 0){        //Child process
 
+                if(spcFlags.depth_level > 0)
+                    spcFlags.depth_level--;
+
                 close(fd[READ]);
 
                 dup2(fd[WRITE], STDOUT_FILENO);
 
+            
                 char * new_arg[argc];
                 new_arg[argc] = NULL;
                 
@@ -168,6 +179,12 @@ int main(int argc, char * argv[], char * envp[]){
                 
 
                 copy_values(new_arg,argv,argc);
+                
+                if(depth_pos != -2){
+                    char new_depth[20];
+                    sprintf(new_depth, "--max-depth=%d", spcFlags.depth_level);
+                    strcpy(new_arg[depth_pos],new_depth);
+                }
                 
                 if(sprintf(new_arg[pathPos], "%s/%s", argv[pathPos] ,filename) < 0){
                     printf("sprintf\n");
@@ -195,10 +212,12 @@ int main(int argc, char * argv[], char * envp[]){
                 while((n=read(fd[READ],line, MAX_LINE)) != 0){
                 
                     log_pipe(logFile,line,'r');
+                    
+                    if(spcFlags.depth_level > 0){
 
-                    write(STDOUT_FILENO, line, n);
-
-                    log_pipe(logFile,line,'s');
+                        write(STDOUT_FILENO, line, n);
+                        log_pipe(logFile,line,'s');
+                    }
 
                     if(extract_number(line, &res) == -1) log_exit(logFile,8);
                     sum+=res;

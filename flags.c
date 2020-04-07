@@ -2,11 +2,12 @@
 
 
 
-int fill_flags(struct flags *scpflags, char * argv[], int argc, int *pathPos){
-
+int fill_flags(struct flags *scpflags, char * argv[], int argc, int *pathPos, int * dethPos){
+    
+    
     int i=1;
     scpflags->all=false; scpflags->block_size=false; scpflags->bytes=false; scpflags->clinks = false;
-    scpflags->depth_level=false; scpflags->deref =false; scpflags->max_depth = false; scpflags->sep_dirs = false;
+    scpflags->depth_level=-1; scpflags->deref =false; scpflags->max_depth = false; scpflags->sep_dirs = false;
 
     while(argv[i] != NULL){
         
@@ -51,6 +52,7 @@ int fill_flags(struct flags *scpflags, char * argv[], int argc, int *pathPos){
             }
 
             scpflags->depth_level = itemp;
+            *dethPos = i;
         }else if(!scpflags->clinks && (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--count-links") == 0) ){
             scpflags->clinks = true;
         
