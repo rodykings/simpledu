@@ -18,29 +18,54 @@
 #define MAX_PIDS 20
 #define READ 0
 #define WRITE 1
-#define MAX_LINE 256
+#define MAX_LINE 4096
 
-pid_t pids[MAX_PIDS];     
-
-void fillpids(pid_t *a, int n);
-
-int putpid(pid_t *a, int n, pid_t pid);
+pid_t pids[MAX_PIDS];
+//bool received_int = false;
+char *logForSignal;
 
 
 /* 07-04-2020 14:54 ©Rodrigo e Deborah */
 //When parent receive SIGINT sends SIGSTOP to childs
-void signalHandler(int signal){
-    printf("\nSIGINT RECEIVED...\n");
-    killpids(pids, 20);
-    exit(0);
+void signalHandlerInt(int signal){
+    log_signal(logForSignal,"SIGINT",'r');
+    write(STDOUT_FILENO, "Do you desire to terminate ou continue running?\n", 48);
+    killpids(pids, MAX_PIDS, SIGSTOP);
+    log_signal(logForSignal,"SIGINT",'s');
+    //received_int = true;
+    
+    sigset_t mask;
+    sigfillset(&mask);
+    sigdelset(&mask, SIGTERM);
+    sigdelset(&mask, SIGCONT);
+    sigsuspend(&mask);
+    
 }
 
+void signalHandlerCont(int signal){
+    //if(!received_int) return;
+    log_signal(logForSignal, "SIGCONT",'r');
+
+    killpids(pids, MAX_PIDS, SIGCONT);
+    log_signal(logForSignal, "SIGCONT",'s');
+    //received_int = false;
+
+}
+
+void signalHandlerTerm(int signal){
+    log_signal(logForSignal, "SIGTERM",'r');
+    killpids(pids, MAX_PIDS, SIGTERM);
+    log_signal(logForSignal, "SIGTERM",'s');
+    log_exit(logForSignal, 0);
+}
 
 int main(int argc, char * argv[], char * envp[]){
     
 
     char * logFile = getenv("LOG_FILENAME");
-
+    
+    //logForSignal = logFile;
+    
     
     //Writes in LogFile
     log_create(logFile, argv, argc);
@@ -52,14 +77,14 @@ int main(int argc, char * argv[], char * envp[]){
     if(argc == 2 && strcmp(argv[1], "help") == 0){
         print_help();
         log_exit(logFile, 0);
-        //exit(0);
+        
     }
 
     //Error conditions
     if(argc > 9 || argc == 1){
         printf("Usage: %s -l <flags> <dirname>\nFor more information about the flags, run %s help\n", argv[0], argv[0]);
         log_exit(logFile, 1);
-        //exit(1);
+        
     }
 
 
@@ -84,8 +109,8 @@ int main(int argc, char * argv[], char * envp[]){
 
     DIR * home;                         //directory curently opening
 
-    char path[200];                     //current path
-    getcwd(path,200);
+    char path[MAX_LINE];                     //current path
+    getcwd(path,MAX_LINE);
 
     sprintf(path, "%s/%s", path, argv[pathPos]);
     
@@ -104,7 +129,26 @@ int main(int argc, char * argv[], char * envp[]){
     //Filling pid array
     fillpids(pids, MAX_PIDS);
 
-    signal(SIGINT, signalHandler);
+    //set signal handler
+    struct sigaction actInt;
+    actInt.sa_handler = signalHandlerInt;
+    sigemptyset(&actInt.sa_mask);
+    actInt.sa_flags = 0;
+    sigaction(SIGINT, &actInt, NULL);
+
+    struct sigaction actCont;
+    actCont.sa_handler = signalHandlerCont;
+    sigemptyset(&actCont.sa_mask);
+    actCont.sa_flags = 0;
+    sigaction(SIGCONT, &actCont, NULL);
+
+    struct sigaction actTerm;
+    actTerm.sa_handler = signalHandlerTerm;
+    sigemptyset(&actTerm.sa_mask);
+    actTerm.sa_flags = 0;
+    sigaction(SIGTERM, &actTerm, NULL);
+    
+    //pause();
 
     while((dir_entry = readdir(home))!=NULL){
 
@@ -117,18 +161,17 @@ int main(int argc, char * argv[], char * envp[]){
         //LOG
         //printf("Processing %s file in process %d\n", filename, getpid());
 
-        char filepath[300];
+        char filepath[MAX_LINE];
+
         if(argv[pathPos][strlen(argv[pathPos])-1] != '/'){
             if(sprintf(filepath, "%s/%s", argv[pathPos], filename) < 0){
                 write(STDOUT_FILENO, "Error in sprintf\n",17);
                 log_exit(logFile, 5);
-                //exit(5);
             }
         }else {
              if(sprintf(filepath, "%s%s", argv[pathPos], filename) < 0){
                 write(STDOUT_FILENO, "Error in sprintf\n",17);
                 log_exit(logFile, 5);
-                //exit(5);
             }
         }
 
@@ -216,13 +259,13 @@ int main(int argc, char * argv[], char * envp[]){
                 new_arg[argc] = NULL;
                 
                 for(int i = 0; i < argc; i++)
-                    new_arg[i] = malloc(100);
+                    new_arg[i] = malloc(MAX_LINE);
                 
 
                 copy_values(new_arg,argv,argc);
                 
                 if(spcFlags.max_depth){
-                    char new_depth[20];
+                    char new_depth[MAX_LINE];
                     sprintf(new_depth, "--max-depth=%d", spcFlags.depth_level);
                     strcpy(new_arg[depth_pos],new_depth);
                 }
@@ -247,6 +290,10 @@ int main(int argc, char * argv[], char * envp[]){
                 
             }else{              //Parent process
                 
+                if(putpid(pids, MAX_PIDS, pid)!=0){
+                    printf("Maximum number of forks exceeded\n");
+                    exit(5);
+                }
                 
                 close(fd[WRITE]);
                 
@@ -270,6 +317,7 @@ int main(int argc, char * argv[], char * envp[]){
                     if(!spcFlags.sep_dirs){
                         if(extract_number(line, &res) == -1) log_exit(logFile,8);
                         sum+=res;
+                        
                     }
                 }
 
@@ -337,8 +385,11 @@ int main(int argc, char * argv[], char * envp[]){
         sprintf(line,"%ld\t%s\n", sum, argv[pathPos]);
         write(STDOUT_FILENO, line, strlen(line));
     }
+    log_entry(logFile, sum);
     log_pipe(logFile,line,'s');
 
                 
     log_exit(logFile, 0);   
+
+    
 }

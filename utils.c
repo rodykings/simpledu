@@ -21,7 +21,7 @@ int extract_number(const char *line, long int *result){
     
     if(line == NULL || result == NULL)  return -1;
 
-    char copy[256];
+    char copy[MAX_LINE];
     strcpy(copy,line);
 
     long int res=0, temp=0;
@@ -62,15 +62,15 @@ int putpid(pid_t *a, int n, pid_t pid){
             a[i] = pid;
             return 0;
         }
+        i++;
     }
     return 1;
 }
 
 
-void killpids(pid_t *a, int n){
+void killpids(pid_t *a, int n, int signo){
     for (int i = 0; i<n; i++){
         if(a[i] != -1 && a[i] != 0)
-            kill(a[i], SIGSTOP);
+            kill(a[i], signo);
     }
-    exit(-1);
 }
