@@ -170,14 +170,20 @@ int main(int argc, char * argv[], char * envp[]){
                         sprintf(line,"%ld\t%s\n", (filestat.st_blocks*512)/spcFlags.nbytes,filepath); 
                         write(STDOUT_FILENO, line, strlen(line));
                         log_pipe(logFile,line,'s');
-                        sum += (filestat.st_blocks*512)/spcFlags.nbytes;
+
+                        
                     }else{
                         sprintf(line,"%ld\t%s\n", filestat.st_blocks/2,filepath); 
                         write(STDOUT_FILENO, line, strlen(line));
                         log_pipe(logFile,line,'s');
-                        sum += filestat.st_blocks/2;
+
+                        
                     }
                 }
+                if(spcFlags.block_size)
+                    sum += (filestat.st_blocks*512)/spcFlags.nbytes;
+                else
+                    sum += filestat.st_blocks/2;
 
                 
             }
@@ -261,8 +267,10 @@ int main(int argc, char * argv[], char * envp[]){
                         log_pipe(logFile,line,'s');
                     }
 
-                    if(extract_number(line, &res) == -1) log_exit(logFile,8);
-                    sum+=res;
+                    if(!spcFlags.sep_dirs){
+                        if(extract_number(line, &res) == -1) log_exit(logFile,8);
+                        sum+=res;
+                    }
                 }
 
                 //log_write(logFile, sum);
