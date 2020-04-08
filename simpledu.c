@@ -9,6 +9,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <signal.h>
 
 #include "utils.h"
 #include "LogFunction.h"
@@ -19,9 +20,20 @@
 #define WRITE 1
 #define MAX_LINE 256
 
+pid_t pids[MAX_PIDS];     
+
 void fillpids(pid_t *a, int n);
 
 int putpid(pid_t *a, int n, pid_t pid);
+
+
+/* 07-04-2020 14:54 ©Rodrigo e Deborah */
+//When parent receive SIGINT sends SIGSTOP to childs
+void signalHandler(int signal){
+    printf("\nSIGINT RECEIVED...\n");
+    killpids(pids, 20);
+    exit(0);
+}
 
 
 int main(int argc, char * argv[], char * envp[]){
@@ -91,7 +103,9 @@ int main(int argc, char * argv[], char * envp[]){
     //chdir(argv[2]);                  
 
     //Filling pid array
-    //fillpids(pids, MAX_PIDS);
+    fillpids(pids, MAX_PIDS);
+
+    signal(SIGINT, signalHandler);
 
     while((dir_entry = readdir(home))!=NULL){
 
@@ -186,9 +200,16 @@ int main(int argc, char * argv[], char * envp[]){
                     strcpy(new_arg[depth_pos],new_depth);
                 }
                 
-                if(sprintf(new_arg[pathPos], "%s/%s", argv[pathPos] ,filename) < 0){
-                    printf("sprintf\n");
-                    log_exit(logFile, 4);
+                if(argv[pathPos][strlen(argv[pathPos])-1] != '/'){
+                    if(sprintf(new_arg[pathPos], "%s/%s", argv[pathPos] ,filename) < 0){
+                        printf("sprintf\n");
+                        log_exit(logFile, 4);
+                    }
+                }else {
+                    if(sprintf(new_arg[pathPos], "%s%s", argv[pathPos] ,filename) < 0){
+                        printf("sprintf\n");
+                        log_exit(logFile, 4);
+                    }
                 }
 
                 //printf("Going to %s using prog %s with flag %s in process %d\n", new_arg[argc-1], new_arg[0], new_arg[1], getpid());    
@@ -286,25 +307,5 @@ int main(int argc, char * argv[], char * envp[]){
     log_pipe(logFile,line,'s');
 
                 
-    log_exit(logFile, 0);
-
-    
-}
-
-void fillpids(pid_t *a, int n){
-    for (int i = 0; i<n; i++){
-        a[i]= (pid_t) 0;
-    }
-    a[n-1]= (pid_t) -1;
-}
-
-int putpid(pid_t *a, int n, pid_t pid){
-    int i=0;
-    while(a[i]!=-1){
-        if(a[i]==0){
-            a[i] = pid;
-            return 0;
-        }
-    }
-    return 1;
+    log_exit(logFile, 0);   
 }
