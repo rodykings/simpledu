@@ -26,17 +26,26 @@ int fill_flags(struct flags *scpflags, char * argv[], int argc, int *pathPos, in
             if(strncmp(argv[i], "--block-size=", 13)== 0){
                
                 strcpy(temp, argv[i]);
+
                 strtok(temp, "=");
-            
-            }else {
-                strcpy(temp, argv[i+1]);
-                if(sscanf(strtok(NULL, " "), "%d", &itemp) == EOF){
                 
+                if(sscanf(strtok(NULL, " "), "%d", &itemp) == EOF){
+            
                     printf("Error on sscnaf\n");
                     return -1;
                 }
-            }
 
+            }else {
+                strcpy(temp, argv[i+1]);
+
+                if(sscanf(temp, "%d", &itemp) == EOF){
+            
+                    printf("Error on sscnaf\n");
+                    return -1;
+                }
+                i++;
+            }
+            
             scpflags->nbytes = itemp;
 
         }else if(!scpflags->deref && (strcmp(argv[i], "-L") == 0 || strcmp(argv[i], "--dereference") == 0)){

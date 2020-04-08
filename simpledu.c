@@ -67,7 +67,7 @@ int main(int argc, char * argv[], char * envp[]){
         printf("Someting went wrong when setting up the flags!\n");
         log_exit(logFile, 6);
     }   
-    
+
 
     //printf("Starting with values: %s %s %s\n", argv[0],argv[1], argv[2]);
     
@@ -118,10 +118,18 @@ int main(int argc, char * argv[], char * envp[]){
         //printf("Processing %s file in process %d\n", filename, getpid());
 
         char filepath[300];
-        if(sprintf(filepath, "%s/%s", argv[pathPos], filename) < 0){
-            write(STDOUT_FILENO, "Error in sprintf\n",17);
-            log_exit(logFile, 5);
-            //exit(5);
+        if(argv[pathPos][strlen(argv[pathPos])-1] != '/'){
+            if(sprintf(filepath, "%s/%s", argv[pathPos], filename) < 0){
+                write(STDOUT_FILENO, "Error in sprintf\n",17);
+                log_exit(logFile, 5);
+                //exit(5);
+            }
+        }else {
+             if(sprintf(filepath, "%s%s", argv[pathPos], filename) < 0){
+                write(STDOUT_FILENO, "Error in sprintf\n",17);
+                log_exit(logFile, 5);
+                //exit(5);
+            }
         }
 
         //printf("filepath: %s\n",filepath);
@@ -140,7 +148,7 @@ int main(int argc, char * argv[], char * envp[]){
         }
         
         //Processes regular file
-        if(S_ISREG(filestat.st_mode)){
+        if(S_ISREG(filestat.st_mode) || S_ISLNK(filestat.st_mode)){
             char line[MAX_LINE];
             
             if(spcFlags.bytes){
@@ -154,16 +162,24 @@ int main(int argc, char * argv[], char * envp[]){
 
                 sum += filestat.st_size;
 
-            }else{
+            }else{    
 
                 if(spcFlags.all && (!spcFlags.max_depth || spcFlags.depth_level > 0)){ 
-
-                    sprintf(line,"%ld\t%s\n", filestat.st_blocks/2,filepath); 
-                    write(STDOUT_FILENO, line, strlen(line));
-                    log_pipe(logFile,line,'s');   
+                    
+                    if(spcFlags.block_size){
+                        sprintf(line,"%ld\t%s\n", (filestat.st_blocks*512)/spcFlags.nbytes,filepath); 
+                        write(STDOUT_FILENO, line, strlen(line));
+                        log_pipe(logFile,line,'s');
+                        sum += (filestat.st_blocks*512)/spcFlags.nbytes;
+                    }else{
+                        sprintf(line,"%ld\t%s\n", filestat.st_blocks/2,filepath); 
+                        write(STDOUT_FILENO, line, strlen(line));
+                        log_pipe(logFile,line,'s');
+                        sum += filestat.st_blocks/2;
+                    }
                 }
 
-                sum += filestat.st_blocks/2;
+                
             }
             
         
@@ -300,12 +316,16 @@ int main(int argc, char * argv[], char * envp[]){
     }
 
     if(spcFlags.bytes){
+
         sum+= filestat.st_size;
         sprintf(line,"%ld\t%s\n", sum, argv[pathPos]);
         write(STDOUT_FILENO, line, strlen(line));
 
     }else{
-        sum+= filestat.st_blocks/2;
+        if(spcFlags.block_size)
+            sum+= filestat.st_blocks*512/spcFlags.nbytes;
+        else
+            sum+= filestat.st_blocks/2;
         sprintf(line,"%ld\t%s\n", sum, argv[pathPos]);
         write(STDOUT_FILENO, line, strlen(line));
     }
