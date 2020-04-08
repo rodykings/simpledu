@@ -93,8 +93,7 @@ int main(int argc, char * argv[], char * envp[]){
 
     //Opening directory
     if((home = opendir(path)) == NULL){
-
-        printf("Error opening dir\n");
+        write(STDOUT_FILENO, "Error opening dir\n",18);
         log_exit(logFile, 2);
         //exit(2);
     }
@@ -120,18 +119,24 @@ int main(int argc, char * argv[], char * envp[]){
 
         char filepath[300];
         if(sprintf(filepath, "%s/%s", argv[pathPos], filename) < 0){
-            printf("Error in sprintf\n");
+            write(STDOUT_FILENO, "Error in sprintf\n",17);
             log_exit(logFile, 5);
             //exit(5);
         }
 
         //printf("filepath: %s\n",filepath);
 
-        //Reads file
-        if(stat(filepath, &filestat)!=0){
-            
-            printf("Error in stat\n");
-            log_exit(logFile, 3);
+        if(spcFlags.deref){
+            //Reads file
+            if(stat(filepath, &filestat)!=0){
+                write(STDOUT_FILENO, "Error in stat\n",14);
+                log_exit(logFile, 3);
+            }
+        }else {
+            if(lstat(filepath, &filestat) != 0){
+                write(STDOUT_FILENO, "Error in lstat\n",15);
+                log_exit(logFile, 3);
+            }
         }
         
         //Processes regular file
