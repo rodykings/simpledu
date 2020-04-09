@@ -16,6 +16,7 @@ Everytime the program finds another directory inside a directory, it creates a n
 
 | Flag | Alternative Flag  | Description                                                               |
 |------|-------------------|---------------------------------------------------------------------------|
+|help  |                   |shows all the flags that can be used                                       |
 |-a    | --all             |a informação exibida diz respeito também a ficheiros                       |
 |-b    | --bytes           |apresenta o número real de bytesde dados(ficheiros) ou alocados(diretórios)|
 |-B    | --block-size=SIZE |define o tamanho (bytes) do bloco para efeitos de representação            |
@@ -37,6 +38,6 @@ $ ./simpledu -l [path] [-a] [-b] [-B size] [-L] [-S] [--max-depth=N]
 
 ## Autors
 
-- Deborah Lago
-- Ricardo Nunes
-- Rodrigo Reis
+- Deborah Lago (<a href="https://github.com/deborahlago">@deborahlago</a>)
+- Ricardo Nunes (<a href="https://github.com/TitanicThompson1">@TitanicThompson1</a>)
+- Rodrigo Reis  (<a href="https://github.com/rodykings">@rodykings</a>)
