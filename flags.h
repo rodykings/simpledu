@@ -13,6 +13,6 @@ struct flags
     int nbytes, depth_level;
 };
 
-int fill_flags(struct flags *scpflags, char * argv[], int argc, int *pathPos);
+int fill_flags(struct flags *scpflags, char * argv[], int argc, int *pathPos, int * dethPos);
 
 void print_flags(struct flags f);

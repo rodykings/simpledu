@@ -1,6 +1,4 @@
-2.1200 - 22915 - CREATE - ./simpledu -l Teste
-1.3190 - 22916 - CREATE - ./simpledu -l Teste/subtest
-1.4760 - 22917 - CREATE - ./simpledu -l Teste/subtest/subsubTest
-2.0000 - 22917 - EXIT - 0
-2.0860 - 22916 - EXIT - 0
-2.8770 - 22915 - EXIT - 0
+0.0000 - 246 - CREATE - ./simpledu -a firejifje Teste
+0.0000 - 246 - EXIT - 2
+0.0000 - 255 - CREATE - ./simpledu -a Testrefree
+0.0000 - 255 - EXIT - 3
