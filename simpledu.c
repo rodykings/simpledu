@@ -31,6 +31,9 @@ int main(int argc, char * argv[], char * envp[]){
     //Writes in LogFile
     log_create(logFile, argv, argc);
 
+    load_log(logFile);
+
+
     struct flags spcFlags;              //The flags on the argument line
     int pathPos, depth_pos;
 
@@ -70,8 +73,6 @@ int main(int argc, char * argv[], char * envp[]){
 
     //set signal handler
     installSignalHandlers(pids);
-    
-    //pause();
 
     while((dir_entry = readdir(home))!=NULL){
 
@@ -235,18 +236,9 @@ int main(int argc, char * argv[], char * envp[]){
                         
                     }
                 }
-
-
-                close(fd[READ]);
-            
-                
+                close(fd[READ]);            
             }
-
-            //sleep(5);
         }
-       
-       
-
     }
     
 

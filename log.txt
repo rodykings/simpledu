@@ -1,4 +1,0 @@
-0.0000 - 246 - CREATE - ./simpledu -a firejifje Teste
-0.0000 - 246 - EXIT - 2
-0.0000 - 255 - CREATE - ./simpledu -a Testrefree
-0.0000 - 255 - EXIT - 3

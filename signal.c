@@ -1,8 +1,14 @@
 #include "signal.h"
 /* 07-04-2020 14:54 ©Rodrigo e Deborah */
 //When parent receive SIGINT sends SIGSTOP to childs
+
+char *logForSignal;
+
+void load_log(char * filename){
+    logForSignal = filename;
+}
+
 void signalHandlerInt(int signal){
-    char *logForSignal;
     log_signal(logForSignal,"SIGINT",'r');
     write(STDOUT_FILENO, "Do you desire to terminate ou continue running?\n", 48);
     killpids(childpids, MAX_PIDS, SIGSTOP);
@@ -18,18 +24,16 @@ void signalHandlerInt(int signal){
 }
 
 void signalHandlerCont(int signal){
-    char *logForSignal;
-    //if(!received_int) return;
+ 
     log_signal(logForSignal, "SIGCONT",'r');
 
     killpids(childpids, MAX_PIDS, SIGCONT);
     log_signal(logForSignal, "SIGCONT",'s');
-    //received_int = false;
 
 }
 
 void signalHandlerTerm(int signal){
-    char *logForSignal;
+
     log_signal(logForSignal, "SIGTERM",'r');
     killpids(childpids, MAX_PIDS, SIGTERM);
     log_signal(logForSignal, "SIGTERM",'s');
@@ -38,6 +42,7 @@ void signalHandlerTerm(int signal){
 
 
 void installSignalHandlers(pid_t *pids){
+    
     //set signal handler
     
     childpids = pids;

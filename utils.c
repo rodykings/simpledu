@@ -37,23 +37,23 @@ int extract_number(const char *line, long int *result){
 
     long int res=0, temp=0;
     
-    char *response1, *response2;
+    char *response1;
     response1 = strtok(copy,"\t");
     
     if(sscanf(response1, "%ld", &temp) == EOF) return -1;
     
     res+=temp;
     
-    response2 = strtok(NULL, "\n");
+        strtok(NULL, "\n");
     
     while((response1 = strtok(NULL, "\t"))!=NULL){
 
         if(sscanf(response1, "%ld", &temp) == EOF) return -1;
         res+=temp;
 
-        response2 = strtok(NULL, "\n");
+        strtok(NULL, "\n");
     }
-
+    
     *result = temp;
 
     return 0;
@@ -87,17 +87,16 @@ void killpids(pid_t *a, int n, int signo){
 }
 
 void check_args(int argc, char * argv[], char* logFile){
-
-     if(argc == 2 && strcmp(argv[1], "help") == 0){
-        print_help();
-        log_exit(logFile, 0);
-        
-    }
-
+    
     //Error conditions
     if(argc > 9 || argc == 1){
         printf("Usage: %s -l <flags> <dirname>\nFor more information about the flags, run %s help\n", argv[0], argv[0]);
         log_exit(logFile, 1);
         
+    }
+
+    if(argc == 2 && strcmp(argv[1], "help") == 0){
+        print_help();
+        log_exit(logFile, 0);
     }
 }

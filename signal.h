@@ -30,3 +30,5 @@ void signalHandlerInt(int signal);
 void signalHandlerCont(int signal);
 
 void signalHandlerTerm(int signal);
+
+void load_log(char * filename);
